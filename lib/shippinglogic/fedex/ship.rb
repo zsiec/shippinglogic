@@ -221,17 +221,20 @@ module Shippinglogic
         # Making sense of the reponse and grabbing the information we need.
         def parse_response(response)
           details = response[:completed_shipment_detail]
-          rate = details[:shipment_rating][:shipment_rate_details].first[:total_net_charge]
-          package_details = details[:completed_package_details]
-          
-          shipment = Shipment.new
-          shipment.rate = BigDecimal.new(rate[:amount])
-          shipment.currency = rate[:currency]
-          shipment.delivery_date = Date.parse(details[:routing_detail][:delivery_date])
-          shipment.tracking_number = package_details[:tracking_id][:tracking_number]
-          shipment.label = package_details[:label][:parts][:image] && Base64.decode64(package_details[:label][:parts][:image])
-          shipment.barcode = package_details[:barcodes][:common2_d_barcode] && Base64.decode64(package_details[:barcodes][:common2_d_barcode])
-          shipment
+          if details
+            rate = details[:shipment_rating][:shipment_rate_details].first[:total_net_charge] if details.present?
+            package_details = details[:completed_package_details]
+            shipment = Shipment.new
+            shipment.rate = BigDecimal.new(rate[:amount])
+            shipment.currency = rate[:currency]
+            shipment.delivery_date = Date.parse(details[:routing_detail][:delivery_date])
+            shipment.tracking_number = package_details[:tracking_id][:tracking_number]
+            shipment.label = package_details[:label][:parts][:image] && Base64.decode64(package_details[:label][:parts][:image])
+            shipment.barcode = package_details[:barcodes][:common2_d_barcode] && Base64.decode64(package_details[:barcodes][:common2_d_barcode])
+            return shipment
+          else
+            return false
+          end
         end
     end
   end
